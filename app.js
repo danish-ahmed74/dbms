@@ -1,12 +1,14 @@
 // ============================================================
 // RedPulse - Blood Bank Management System
-// Client-Side Core Engine & Relational State Manager
+// Client-Side Core Engine with Supabase (PostgreSQL) Live Sync
 // Team: Atharv Malviya (0827CS241044), Danish Ahmed (0827CS241062)
 // ============================================================
 
 const STORAGE_KEY = 'REDPULSE_DATABASE_V1';
+const SUPABASE_STORAGE_URL_KEY = 'REDPULSE_SUPABASE_URL';
+const SUPABASE_STORAGE_ANON_KEY = 'REDPULSE_SUPABASE_KEY';
 
-// Initial Seed Data matching the Synopsis Specification
+// Default Seed Data (used as fallback or initial load)
 const DEFAULT_DATA = {
   inventory: [
     { inventory_id: 1, blood_group: 'A+', available_units: 24, last_updated: '2026-11-21 14:30:00' },
@@ -42,16 +44,18 @@ const COMPATIBILITY_MAP = {
   'A+':  { canReceive: ['A+', 'A-', 'O+', 'O-'], canDonateTo: ['A+', 'AB+'] },
   'O+':  { canReceive: ['O+', 'O-'], canDonateTo: ['O+', 'A+', 'B+', 'AB+'] },
   'B+':  { canReceive: ['B+', 'B-', 'O+', 'O-'], canDonateTo: ['B+', 'AB+'] },
-  'AB+': { canReceive: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], canDonateTo: ['AB+'] }, // Universal Recipient
+  'AB+': { canReceive: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], canDonateTo: ['AB+'] },
   'A-':  { canReceive: ['A-', 'O-'], canDonateTo: ['A+', 'A-', 'AB+', 'AB-'] },
-  'O-':  { canReceive: ['O-'], canDonateTo: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] }, // Universal Donor
+  'O-':  { canReceive: ['O-'], canDonateTo: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
   'B-':  { canReceive: ['B-', 'O-'], canDonateTo: ['B+', 'B-', 'AB+', 'AB-'] },
   'AB-': { canReceive: ['AB-', 'A-', 'B-', 'O-'], canDonateTo: ['AB+', 'AB-'] }
 };
 
-// App State Manager
+// State Manager with Supabase Live Connector
 class RedPulseStore {
   constructor() {
+    this.supabase = null;
+    this.isSupabaseConnected = false;
     this.loadState();
   }
 
@@ -79,6 +83,126 @@ class RedPulseStore {
     this.saveState();
   }
 
+  // Supabase Connection Initializer
+  async initSupabase() {
+    let url = localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url);
+    let key = localStorage.getItem(SUPABASE_STORAGE_ANON_KEY) || (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.anonKey);
+
+    if (url && key && window.supabase) {
+      try {
+        this.supabase = window.supabase.createClient(url.trim(), key.trim());
+        // Verify with a test query
+        const { data, error } = await this.supabase.from('blood_inventory').select('blood_group').limit(1);
+        if (!error) {
+          this.isSupabaseConnected = true;
+          this.updateConnectionBadge(true);
+          await this.syncFromSupabase();
+          return { success: true };
+        } else {
+          console.warn('Supabase test query warning:', error.message);
+          this.isSupabaseConnected = false;
+          this.updateConnectionBadge(false);
+          return { success: false, error: error.message };
+        }
+      } catch (err) {
+        console.error('Supabase init error:', err);
+        this.isSupabaseConnected = false;
+        this.updateConnectionBadge(false);
+        return { success: false, error: err.message };
+      }
+    } else {
+      this.isSupabaseConnected = false;
+      this.updateConnectionBadge(false);
+      return { success: false, error: 'No Supabase credentials configured.' };
+    }
+  }
+
+  updateConnectionBadge(connected) {
+    const badge = document.getElementById('supabase-status-badge');
+    const btn = document.getElementById('btn-supabase-status');
+    if (badge && btn) {
+      if (connected) {
+        badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle text-success me-1"></i>Supabase Live</span>';
+        btn.classList.remove('btn-outline-light');
+        btn.classList.add('btn-light', 'text-success', 'fw-bold');
+      } else {
+        badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-circle text-warning me-1"></i>Connect DB</span>';
+        btn.classList.remove('btn-light', 'text-success', 'fw-bold');
+        btn.classList.add('btn-outline-light');
+      }
+    }
+  }
+
+  // Pull all records from Supabase tables
+  async syncFromSupabase() {
+    if (!this.supabase) return;
+
+    try {
+      // 1. Fetch Inventory
+      const { data: invData, error: invErr } = await this.supabase
+        .from('blood_inventory')
+        .select('*')
+        .order('blood_group');
+
+      if (!invErr && invData && invData.length > 0) {
+        this.data.inventory = invData.map(i => ({
+          inventory_id: i.inventory_id,
+          blood_group: i.blood_group,
+          available_units: i.available_units,
+          last_updated: i.last_updated ? i.last_updated.replace('T', ' ').substring(0, 19) : 'Just now'
+        }));
+      }
+
+      // 2. Fetch Donors
+      const { data: donorsData, error: donErr } = await this.supabase
+        .from('donors')
+        .select('*')
+        .order('donor_id', { ascending: false });
+
+      if (!donErr && donorsData) {
+        this.data.donors = donorsData.map(d => ({
+          donor_id: d.donor_id,
+          full_name: d.full_name,
+          blood_group: d.blood_group,
+          age: d.age,
+          gender: d.gender,
+          contact_no: d.contact_no,
+          city: d.city,
+          last_donation_date: d.last_donation_date || null,
+          registered_at: d.registered_at ? d.registered_at.substring(0, 10) : ''
+        }));
+      }
+
+      // 3. Fetch Requests
+      const { data: reqsData, error: reqErr } = await this.supabase
+        .from('blood_requests')
+        .select('*')
+        .order('request_id', { ascending: false });
+
+      if (!reqErr && reqsData) {
+        this.data.requests = reqsData.map(r => ({
+          request_id: r.request_id,
+          patient_name: r.patient_name,
+          blood_group_needed: r.blood_group_needed,
+          units_requested: r.units_requested,
+          hospital_name: r.hospital_name,
+          contact_person: r.contact_person,
+          contact_no: r.contact_no,
+          request_date: r.request_date ? r.request_date.replace('T', ' ').substring(0, 16) : '',
+          status: r.status,
+          priority: r.priority || 'Normal',
+          notes: r.admin_notes || ''
+        }));
+      }
+
+      this.saveState();
+      refreshAllViews();
+      console.log('✅ Synchronized with live Supabase database.');
+    } catch (e) {
+      console.warn('Sync error:', e);
+    }
+  }
+
   // --- Inventory Operations ---
   getInventory() {
     return this.data.inventory;
@@ -89,23 +213,45 @@ class RedPulseStore {
     return item ? item.available_units : 0;
   }
 
-  updateInventoryUnits(bloodGroup, delta) {
+  async updateInventoryUnits(bloodGroup, delta) {
     const item = this.data.inventory.find(i => i.blood_group === bloodGroup);
     if (item) {
       item.available_units = Math.max(0, item.available_units + delta);
       item.last_updated = new Date().toISOString().replace('T', ' ').substring(0, 19);
       this.saveState();
+
+      if (this.supabase && this.isSupabaseConnected) {
+        try {
+          await this.supabase
+            .from('blood_inventory')
+            .update({ available_units: item.available_units })
+            .eq('blood_group', bloodGroup);
+        } catch (err) {
+          console.error('Supabase stock update error:', err);
+        }
+      }
       return item.available_units;
     }
     return null;
   }
 
-  setInventoryUnits(bloodGroup, units) {
+  async setInventoryUnits(bloodGroup, units) {
     const item = this.data.inventory.find(i => i.blood_group === bloodGroup);
     if (item) {
       item.available_units = Math.max(0, parseInt(units, 10) || 0);
       item.last_updated = new Date().toISOString().replace('T', ' ').substring(0, 19);
       this.saveState();
+
+      if (this.supabase && this.isSupabaseConnected) {
+        try {
+          await this.supabase
+            .from('blood_inventory')
+            .update({ available_units: item.available_units })
+            .eq('blood_group', bloodGroup);
+        } catch (err) {
+          console.error('Supabase stock set error:', err);
+        }
+      }
       return item.available_units;
     }
     return null;
@@ -116,7 +262,7 @@ class RedPulseStore {
     return this.data.donors;
   }
 
-  addDonor(donor) {
+  async addDonor(donor) {
     const newId = this.data.donors.length > 0 
       ? Math.max(...this.data.donors.map(d => d.donor_id)) + 1 
       : 101;
@@ -131,20 +277,54 @@ class RedPulseStore {
       last_donation_date: donor.last_donation_date || null,
       registered_at: new Date().toISOString().substring(0, 10)
     };
+
     this.data.donors.unshift(newDonor);
     this.saveState();
+
+    if (this.supabase && this.isSupabaseConnected) {
+      try {
+        const { data, error } = await this.supabase.from('donors').insert([{
+          full_name: newDonor.full_name,
+          blood_group: newDonor.blood_group,
+          age: newDonor.age,
+          gender: newDonor.gender,
+          contact_no: newDonor.contact_no,
+          city: newDonor.city,
+          last_donation_date: newDonor.last_donation_date || null
+        }]).select();
+
+        if (data && data[0]) {
+          newDonor.donor_id = data[0].donor_id;
+          this.saveState();
+        }
+      } catch (err) {
+        console.error('Supabase donor insert error:', err);
+      }
+    }
+
     return newDonor;
   }
 
-  recordDonation(donorId) {
+  async recordDonation(donorId) {
     const donor = this.data.donors.find(d => d.donor_id === parseInt(donorId, 10));
     if (!donor) return { success: false, message: 'Donor not found' };
 
     const todayStr = new Date().toISOString().substring(0, 10);
     donor.last_donation_date = todayStr;
-    // Add 1 unit to inventory automatically
-    this.updateInventoryUnits(donor.blood_group, 1);
+    await this.updateInventoryUnits(donor.blood_group, 1);
     this.saveState();
+
+    if (this.supabase && this.isSupabaseConnected) {
+      try {
+        await this.supabase
+          .from('donors')
+          .update({ last_donation_date: todayStr })
+          .eq('donor_id', donorId);
+      } catch (err) {
+        console.error('Supabase record donation error:', err);
+      }
+    }
+
     return { success: true, donor, blood_group: donor.blood_group };
   }
 
@@ -153,7 +333,7 @@ class RedPulseStore {
     return this.data.requests;
   }
 
-  addRequest(req) {
+  async addRequest(req) {
     const newId = this.data.requests.length > 0 
       ? Math.max(...this.data.requests.map(r => r.request_id)) + 1 
       : 201;
@@ -170,13 +350,36 @@ class RedPulseStore {
       priority: req.priority || 'Normal',
       notes: req.notes || ''
     };
+
     this.data.requests.unshift(newRequest);
     this.saveState();
+
+    if (this.supabase && this.isSupabaseConnected) {
+      try {
+        const { data, error } = await this.supabase.from('blood_requests').insert([{
+          patient_name: newRequest.patient_name,
+          blood_group_needed: newRequest.blood_group_needed,
+          units_requested: newRequest.units_requested,
+          hospital_name: newRequest.hospital_name,
+          contact_person: newRequest.contact_person,
+          contact_no: newRequest.contact_no,
+          status: 'Pending',
+          admin_notes: newRequest.notes || null
+        }]).select();
+
+        if (data && data[0]) {
+          newRequest.request_id = data[0].request_id;
+          this.saveState();
+        }
+      } catch (err) {
+        console.error('Supabase request insert error:', err);
+      }
+    }
+
     return newRequest;
   }
 
-  // Synchronized Inventory Deduction (ACID Simulation)
-  adjudicateRequest(requestId, action, notes = '') {
+  async adjudicateRequest(requestId, action, notes = '') {
     const req = this.data.requests.find(r => r.request_id === parseInt(requestId, 10));
     if (!req) return { success: false, message: 'Request ID not found.' };
 
@@ -190,7 +393,6 @@ class RedPulseStore {
           message: `Insufficient inventory! Available units for ${req.blood_group_needed}: ${inv.available_units}, Requested: ${req.units_requested}. Cannot approve without sufficient stock.` 
         };
       }
-      // Deduct atomically
       inv.available_units -= req.units_requested;
       inv.last_updated = new Date().toISOString().replace('T', ' ').substring(0, 19);
       req.status = 'Approved';
@@ -204,6 +406,25 @@ class RedPulseStore {
     }
 
     this.saveState();
+
+    if (this.supabase && this.isSupabaseConnected) {
+      try {
+        await this.supabase
+          .from('blood_requests')
+          .update({ status: req.status, admin_notes: req.notes || null })
+          .eq('request_id', requestId);
+
+        if (action === 'Approve') {
+          await this.supabase
+            .from('blood_inventory')
+            .update({ available_units: inv.available_units })
+            .eq('blood_group', req.blood_group_needed);
+        }
+      } catch (err) {
+        console.error('Supabase adjudication sync error:', err);
+      }
+    }
+
     return { success: true, request: req, remainingUnits: inv.available_units };
   }
 
@@ -247,24 +468,32 @@ class RedPulseStore {
   }
 }
 
-// Instantiate Store
+// Instantiate Global Store
 const store = new RedPulseStore();
 
 // ============================================================
 // UI Renderers & Event Handlers
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initNavigation();
+  refreshAllViews();
+  setupForms();
+  setupCompatibilityTool();
+  setupRequestTracker();
+  setupSupabaseModal();
+
+  // Initialize Supabase Connection
+  await store.initSupabase();
+});
+
+function refreshAllViews() {
   renderHeroStats();
   renderPublicInventory();
   renderDonorTable();
   renderRequisitionAdjudication();
   renderAdminStockConsole();
-  setupForms();
-  setupCompatibilityTool();
-  setupRequestTracker();
-});
+}
 
 // View Navigation Router
 function initNavigation() {
@@ -286,7 +515,6 @@ function switchView(viewId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Update active state in navbar
   document.querySelectorAll('.nav-link.custom-nav').forEach(nl => {
     nl.classList.remove('active');
     if (nl.getAttribute('data-view-target') === viewId) {
@@ -294,7 +522,6 @@ function switchView(viewId) {
     }
   });
 
-  // Re-render components when view changes
   if (viewId === 'view-inventory') renderPublicInventory();
   if (viewId === 'view-donors') renderDonorTable();
   if (viewId === 'view-admin') {
@@ -360,7 +587,7 @@ function renderPublicInventory(filterGroup = 'ALL') {
           ${statusText}
         </span>
         <div class="mt-3 pt-2 border-top text-muted" style="font-size: 0.75rem;">
-          <i class="fa-regular fa-clock me-1"></i> Synced: ${item.last_updated.split(' ')[1] || 'Just now'}
+          <i class="fa-regular fa-clock me-1"></i> ${store.isSupabaseConnected ? '<span class="text-success"><i class="fa-solid fa-cloud me-1"></i>Supabase Synced</span>' : 'Local Synced'}
         </div>
       </div>
     `;
@@ -426,17 +653,13 @@ function renderDonorTable(searchTerm = '') {
     tbody.appendChild(tr);
   });
 
-  // Attach Log Donation click events
   tbody.querySelectorAll('.record-donation-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const donorId = btn.getAttribute('data-donor-id');
-      const res = store.recordDonation(donorId);
+      const res = await store.recordDonation(donorId);
       if (res.success) {
         showToast(`Donation recorded for ${res.donor.full_name}! +1 unit added to ${res.blood_group} inventory.`, 'success');
-        renderDonorTable(document.getElementById('donor-search-input')?.value || '');
-        renderHeroStats();
-        renderPublicInventory();
-        renderAdminStockConsole();
+        refreshAllViews();
       }
     });
   });
@@ -478,28 +701,23 @@ function renderAdminStockConsole() {
     container.appendChild(tr);
   });
 
-  // Attach stock adjust handlers
   container.querySelectorAll('.stock-adjust-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const group = btn.getAttribute('data-group');
       const delta = parseInt(btn.getAttribute('data-delta'), 10);
-      store.updateInventoryUnits(group, delta);
-      renderAdminStockConsole();
-      renderPublicInventory();
-      renderHeroStats();
+      await store.updateInventoryUnits(group, delta);
+      refreshAllViews();
       showToast(`Updated ${group} stock count.`, 'info');
     });
   });
 
   container.querySelectorAll('.stock-save-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const group = btn.getAttribute('data-group');
       const input = container.querySelector(`input[data-group="${group}"]`);
       if (input) {
-        store.setInventoryUnits(group, input.value);
-        renderAdminStockConsole();
-        renderPublicInventory();
-        renderHeroStats();
+        await store.setInventoryUnits(group, input.value);
+        refreshAllViews();
         showToast(`Saved ${group} inventory: ${input.value} units.`, 'success');
       }
     });
@@ -572,18 +790,14 @@ function renderRequisitionAdjudication(statusFilter = 'ALL') {
     tbody.appendChild(tr);
   });
 
-  // Attach action button clicks
   tbody.querySelectorAll('.req-action-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
       const action = btn.getAttribute('data-action');
-      const res = store.adjudicateRequest(id, action);
+      const res = await store.adjudicateRequest(id, action);
       if (res.success) {
         showToast(`Request #${id} marked as ${action}! Inventory synchronized.`, 'success');
-        renderRequisitionAdjudication(statusFilter);
-        renderPublicInventory();
-        renderAdminStockConsole();
-        renderHeroStats();
+        refreshAllViews();
       } else {
         alert(res.message);
       }
@@ -593,7 +807,6 @@ function renderRequisitionAdjudication(statusFilter = 'ALL') {
 
 // 6. Setup Form Handlers (Registration & Emergency Request)
 function setupForms() {
-  // Donor Form Date picker helper for cooldown calculation
   const lastDonationInput = document.getElementById('donor_last_date');
   const cooldownFeedback = document.getElementById('donor-cooldown-feedback');
 
@@ -625,7 +838,7 @@ function setupForms() {
   // Donor Registration Form Submit
   const donorForm = document.getElementById('donor-registration-form');
   if (donorForm) {
-    donorForm.addEventListener('submit', (e) => {
+    donorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const age = parseInt(document.getElementById('donor_age').value, 10);
       if (age < 18 || age > 65) {
@@ -643,17 +856,11 @@ function setupForms() {
         last_donation_date: document.getElementById('donor_last_date').value || null
       };
 
-      const newDonor = store.addDonor(donorObj);
-      showToast(`Donor ${newDonor.full_name} registered successfully! Donor ID: #${newDonor.donor_id}`, 'success');
+      const newDonor = await store.addDonor(donorObj);
+      showToast(`Donor ${newDonor.full_name} registered successfully!`, 'success');
       donorForm.reset();
-      if (cooldownFeedback) {
-        cooldownFeedback.className = 'cooldown-box eligible';
-        cooldownFeedback.innerHTML = `<i class="fa-solid fa-info-circle fs-4"></i><div>First time donors or donors past 90 days are immediately eligible.</div>`;
-      }
-      renderDonorTable();
-      renderHeroStats();
+      refreshAllViews();
 
-      // Show receipt modal
       showReceiptModal({
         title: 'Donor Registration Confirmed',
         id: `#DON-${newDonor.donor_id}`,
@@ -671,7 +878,6 @@ function setupForms() {
   // Emergency Request Form Submit
   const requestForm = document.getElementById('emergency-request-form');
   if (requestForm) {
-    // Dynamic stock warning
     const bgSelect = document.getElementById('req_blood_group');
     const unitsInput = document.getElementById('req_units');
     const stockWarnEl = document.getElementById('req-stock-indicator');
@@ -694,7 +900,7 @@ function setupForms() {
     if (bgSelect) bgSelect.addEventListener('change', updateStockWarning);
     if (unitsInput) unitsInput.addEventListener('input', updateStockWarning);
 
-    requestForm.addEventListener('submit', (e) => {
+    requestForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const reqObj = {
         patient_name: document.getElementById('req_patient_name').value.trim(),
@@ -707,12 +913,11 @@ function setupForms() {
         notes: document.getElementById('req_notes').value.trim()
       };
 
-      const newReq = store.addRequest(reqObj);
+      const newReq = await store.addRequest(reqObj);
       showToast(`Emergency Requisition #${newReq.request_id} created! Logged in database.`, 'success');
       requestForm.reset();
       updateStockWarning();
-      renderHeroStats();
-      renderRequisitionAdjudication();
+      refreshAllViews();
 
       showReceiptModal({
         title: 'Emergency Blood Request Submitted',
@@ -722,13 +927,12 @@ function setupForms() {
           { label: 'Blood Group Needed', val: newReq.blood_group_needed },
           { label: 'Units Requested', val: `${newReq.units_requested} Unit(s)` },
           { label: 'Hospital', val: newReq.hospital_name },
-          { label: 'Status', val: 'Pending Administrator Verification' }
+          { label: 'Database Status', val: store.isSupabaseConnected ? 'Synced to Supabase' : 'Logged Locally' }
         ]
       });
     });
   }
 
-  // Donor Search input
   const donorSearchInput = document.getElementById('donor-search-input');
   if (donorSearchInput) {
     donorSearchInput.addEventListener('input', (e) => {
@@ -736,7 +940,6 @@ function setupForms() {
     });
   }
 
-  // Admin filter dropdown
   const adminFilterSelect = document.getElementById('admin-req-filter');
   if (adminFilterSelect) {
     adminFilterSelect.addEventListener('change', (e) => {
@@ -744,7 +947,6 @@ function setupForms() {
     });
   }
 
-  // Inventory filter in public tab
   const invFilterBtns = document.querySelectorAll('.inv-filter-btn');
   invFilterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -754,23 +956,17 @@ function setupForms() {
     });
   });
 
-  // Reset database button
   const resetBtn = document.getElementById('btn-reset-database');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       if (confirm('Reset RedPulse database to initial synopsis seed values? All custom entries will be restored to defaults.')) {
         store.resetState();
-        renderHeroStats();
-        renderPublicInventory();
-        renderDonorTable();
-        renderAdminStockConsole();
-        renderRequisitionAdjudication();
+        refreshAllViews();
         showToast('Database reset to synopsis defaults.', 'info');
       }
     });
   }
 
-  // Admin Login Modal Toggle
   const adminLoginBtn = document.getElementById('btn-admin-login-submit');
   if (adminLoginBtn) {
     adminLoginBtn.addEventListener('click', () => {
@@ -789,7 +985,92 @@ function setupForms() {
   }
 }
 
-// 7. Blood Compatibility Calculator Tool
+// 7. Supabase Configuration Modal Logic
+function setupSupabaseModal() {
+  const urlInput = document.getElementById('input_supabase_url');
+  const keyInput = document.getElementById('input_supabase_key');
+  const feedbackEl = document.getElementById('supabase-modal-feedback');
+  const saveBtn = document.getElementById('btn-save-supabase-config');
+  const disconnectBtn = document.getElementById('btn-disconnect-supabase');
+
+  const existingUrl = localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || '';
+  const existingKey = localStorage.getItem(SUPABASE_STORAGE_ANON_KEY) || (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.anonKey) || '';
+
+  if (urlInput) urlInput.value = existingUrl;
+  if (keyInput) keyInput.value = existingKey;
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      const key = keyInput.value.trim();
+
+      if (!url || !key) {
+        feedbackEl.className = 'alert alert-danger py-2 small mb-3';
+        feedbackEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Please provide both Supabase URL and Anon Key.';
+        feedbackEl.classList.remove('d-none');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Testing connection...';
+
+      try {
+        const testClient = window.supabase.createClient(url, key);
+        const { data, error } = await testClient.from('blood_inventory').select('*').limit(1);
+
+        if (error) {
+          throw error;
+        }
+
+        // Connection successful!
+        localStorage.setItem(SUPABASE_STORAGE_URL_KEY, url);
+        localStorage.setItem(SUPABASE_STORAGE_ANON_KEY, key);
+
+        store.supabase = testClient;
+        store.isSupabaseConnected = true;
+        store.updateConnectionBadge(true);
+        await store.syncFromSupabase();
+
+        feedbackEl.className = 'alert alert-success py-2 small mb-3';
+        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Connected to Supabase successfully! Live database synchronized.';
+        feedbackEl.classList.remove('d-none');
+
+        setTimeout(() => {
+          const modalEl = document.getElementById('supabaseConfigModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }, 1200);
+
+        showToast('Connected to Supabase PostgreSQL database!', 'success');
+      } catch (err) {
+        feedbackEl.className = 'alert alert-danger py-2 small mb-3';
+        feedbackEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Connection failed: ${err.message}. Ensure your tables are created using supabase_schema.sql.`;
+        feedbackEl.classList.remove('d-none');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-link me-1"></i> Test &amp; Connect to Supabase';
+      }
+    });
+  }
+
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener('click', () => {
+      localStorage.removeItem(SUPABASE_STORAGE_URL_KEY);
+      localStorage.removeItem(SUPABASE_STORAGE_ANON_KEY);
+      store.supabase = null;
+      store.isSupabaseConnected = false;
+      store.updateConnectionBadge(false);
+      if (urlInput) urlInput.value = '';
+      if (keyInput) keyInput.value = '';
+      feedbackEl.className = 'alert alert-info py-2 small mb-3';
+      feedbackEl.innerHTML = '<i class="fa-solid fa-info-circle me-1"></i> Disconnected. Using offline local storage.';
+      feedbackEl.classList.remove('d-none');
+      showToast('Switched to local offline mode.', 'info');
+    });
+  }
+}
+
+// 8. Blood Compatibility Tool
 function setupCompatibilityTool() {
   const select = document.getElementById('compat-blood-group-select');
   const canReceiveDiv = document.getElementById('compat-can-receive');
@@ -810,7 +1091,7 @@ function setupCompatibilityTool() {
   updateMatrix();
 }
 
-// 8. Requisition Status Tracker
+// 9. Requisition Status Tracker
 function setupRequestTracker() {
   const trackBtn = document.getElementById('btn-track-request');
   const trackInput = document.getElementById('track-query-input');
@@ -841,10 +1122,6 @@ function setupRequestTracker() {
       `;
       return;
     }
-
-    let stepPending = 'completed';
-    let stepApproved = match.status === 'Approved' || match.status === 'Fulfilled' ? 'completed' : (match.status === 'Rejected' ? 'rejected' : 'active');
-    let stepFulfilled = match.status === 'Fulfilled' ? 'completed' : 'pending';
 
     resultDiv.innerHTML = `
       <div class="card card-custom p-4 mt-3">
@@ -885,12 +1162,12 @@ function setupRequestTracker() {
             ${match.status === 'Pending' ? `
               <div class="text-warning-emphasis">
                 <i class="fa-solid fa-spinner fa-spin me-2"></i>
-                <strong>Under Relational Verification:</strong> Requisition is in the administrative review queue. Stock reserves are currently being verified against hospital urgency.
+                <strong>Under Relational Verification:</strong> Requisition is in the administrative review queue.
               </div>
             ` : match.status === 'Approved' ? `
               <div class="text-primary">
                 <i class="fa-solid fa-circle-check me-2"></i>
-                <strong>Requisition Approved & Reserved:</strong> ${match.units_requested} units of ${match.blood_group_needed} have been deducted from active stock and reserved for hospital pickup.
+                <strong>Requisition Approved & Reserved:</strong> ${match.units_requested} units of ${match.blood_group_needed} have been deducted from active stock.
               </div>
             ` : match.status === 'Fulfilled' ? `
               <div class="text-success">
@@ -910,7 +1187,7 @@ function setupRequestTracker() {
   });
 }
 
-// Utility: Modal for confirmation receipts
+// Receipt Modal Helper
 function showReceiptModal(data) {
   let modalEl = document.getElementById('genericReceiptModal');
   if (!modalEl) {
@@ -941,7 +1218,7 @@ function showReceiptModal(data) {
   body.innerHTML = `
     <div class="text-center mb-4">
       <div class="text-danger fw-bold fs-2">${data.id}</div>
-      <small class="text-muted">Recorded into RedPulse Central Database</small>
+      <small class="text-muted">${store.isSupabaseConnected ? 'Synchronized with Supabase Live Database' : 'Recorded into Local Relational Store'}</small>
     </div>
     <ul class="list-group list-group-flush border rounded-3 mb-3">
       ${data.details.map(d => `
@@ -960,7 +1237,6 @@ function showReceiptModal(data) {
   modal.show();
 }
 
-// Utility: Toast notifications
 function showToast(message, type = 'info') {
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -993,7 +1269,6 @@ function showToast(message, type = 'info') {
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// Helper: Escape HTML strings
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
   return String(text)

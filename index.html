@@ -30,7 +30,10 @@
         <span class="mx-2 d-none d-md-inline">|</span>
         <span class="d-none d-md-inline text-light"><i class="fa-solid fa-shield-halved me-1"></i> ACID-Compliant Real-Time Inventory Connected</span>
       </div>
-      <div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-xs btn-outline-light py-0 px-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#supabaseConfigModal" id="btn-supabase-status">
+          <i class="fa-solid fa-database me-1"></i> Supabase: <span id="supabase-status-badge">Connect DB</span>
+        </button>
         <button class="btn btn-xs btn-outline-light py-0 px-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
           <i class="fa-solid fa-lock me-1"></i> Admin Portal
         </button>
@@ -929,6 +932,42 @@ CREATE TABLE IF NOT EXISTS BLOOD_REQUESTS (
     </div>
   </div>
 
+  <!-- SUPABASE CONFIG MODAL -->
+  <div class="modal fade" id="supabaseConfigModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card-custom">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-success">
+            <i class="fa-solid fa-bolt me-2"></i>Connect Supabase Database
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small">
+            Connect your live Supabase PostgreSQL database to this deployment. All inventory, donors, and requests will sync directly with your Supabase tables.
+          </p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Supabase Project URL *</label>
+            <input type="url" id="input_supabase_url" class="form-control" placeholder="https://xxxxxxxxxxxx.supabase.co">
+            <small class="text-muted">Supabase Dashboard &rarr; <em>Project Settings &rarr; API &rarr; Project URL</em></small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Supabase Anon Public API Key *</label>
+            <textarea id="input_supabase_key" class="form-control" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+            <small class="text-muted">Supabase Dashboard &rarr; <em>Project Settings &rarr; API &rarr; Project API keys &rarr; anon public</em></small>
+          </div>
+          <div id="supabase-modal-feedback" class="d-none alert py-2 small mb-3"></div>
+          <button type="button" class="btn btn-success w-100 py-2 fw-semibold" id="btn-save-supabase-config">
+            <i class="fa-solid fa-link me-1"></i> Test &amp; Connect to Supabase
+          </button>
+          <button type="button" class="btn btn-link btn-sm text-secondary w-100 mt-2" id="btn-disconnect-supabase">
+            Disconnect / Use Local Mode
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="py-4 mt-5">
     <div class="container text-center">
@@ -948,6 +987,12 @@ CREATE TABLE IF NOT EXISTS BLOOD_REQUESTS (
   <!-- Bootstrap 5 Bundle JS (Includes Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
+  <!-- Supabase JS Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Supabase Project Configuration -->
+  <script src="config.js"></script>
+
   <!-- Core Application Logic -->
   <script src="app.js"></script>
 </body>
