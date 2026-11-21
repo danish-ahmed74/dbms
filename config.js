@@ -1,10 +1,8 @@
 // ============================================================
-// RedPulse: Supabase Configuration
-// Paste your Supabase project credentials here or set them via the UI!
-// Where to find: Supabase Dashboard -> Project Settings -> API
+// RedPulse: Supabase Live Database Configuration
 // ============================================================
 
 window.SUPABASE_CONFIG = {
-  url: '',      // e.g. "https://xxxxxxxxxxxx.supabase.co"
-  anonKey: ''  // e.g. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  url: 'https://fzrxyogeypisftncdmjy.supabase.co',
+  anonKey: 'sb_publishable_no4q4UYf7AZ5VcbZdPhgZg_vHfylJJk'
 };
