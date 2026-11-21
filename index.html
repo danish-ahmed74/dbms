@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedPulse - Blood Bank Management System</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Emergency Ticker -->
+  <div class="emergency-banner d-flex justify-content-between align-items-center">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div>
+        <i class="fa-solid fa-truck-medical pulse-anim me-2"></i>
+        <strong>24x7 Emergency Blood Line:</strong> <span class="ms-1">+91 1800-REDPULSE (Toll-Free)</span>
+        <span class="mx-2 d-none d-md-inline">|</span>
+        <span class="d-none d-md-inline text-light"><i class="fa-solid fa-shield-halved me-1"></i> ACID-Compliant Real-Time Inventory Connected</span>
+      </div>
+      <div>
+        <button class="btn btn-xs btn-outline-light py-0 px-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+          <i class="fa-solid fa-lock me-1"></i> Admin Portal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-redpulse sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#" data-view-target="view-home">
+        <span class="pulse-anim text-white fs-3">
+          <i class="fa-solid fa-droplet"></i>
+        </span>
+        <div>
+          <div class="brand-text text-white leading-none">RedPulse</div>
+          <div class="brand-sub text-white-50">Blood Bank Management System</div>
+        </div>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center gap-1">
+          <li class="nav-item">
+            <a class="nav-link custom-nav active" href="#" data-view-target="view-home">
+              <i class="fa-solid fa-house me-1"></i> Overview
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-inventory">
+              <i class="fa-solid fa-cubes-stacked me-1"></i> Live Inventory
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-donors">
+              <i class="fa-solid fa-hand-holding-heart me-1"></i> Donors & Cooldown
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-request">
+              <i class="fa-solid fa-bell me-1"></i> Emergency Request
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-tracker">
+              <i class="fa-solid fa-magnifying-glass me-1"></i> Track Request
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-admin">
+              <i class="fa-solid fa-sliders me-1"></i> Admin Console
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link custom-nav" href="#" data-view-target="view-schema">
+              <i class="fa-solid fa-database me-1"></i> Synopsis & ER
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 1: HOME & HERO OVERVIEW -->
+  <!-- ============================================================ -->
+  <section id="view-home" class="view-section">
+    <!-- Hero Banner -->
+    <div class="hero-section">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-7 mb-4 mb-lg-0">
+            <div class="section-badge">DBMS Relational Web Application</div>
+            <h1 class="hero-title display-5 fw-bold mb-3">
+              Real-Time Blood Inventory & <span class="hero-highlight">Emergency Lifecycle</span> Management
+            </h1>
+            <p class="lead text-muted mb-4">
+              RedPulse eliminates critical hospital dispatch delays with an ACID-compliant relational system connecting voluntary blood donors, verified live inventory units, and prioritized hospital requisitions.
+            </p>
+            <div class="d-flex flex-wrap gap-3">
+              <button class="btn btn-crimson" data-view-target="view-request">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> Request Blood Urgently
+              </button>
+              <button class="btn btn-outline-crimson" data-view-target="view-donors">
+                <i class="fa-solid fa-user-plus me-2"></i> Register as Voluntary Donor
+              </button>
+              <button class="btn btn-light border" data-view-target="view-inventory">
+                <i class="fa-solid fa-binoculars me-2"></i> Lookup Stock
+              </button>
+            </div>
+            
+            <!-- Team Attribution Badge -->
+            <div class="mt-4 pt-3 border-top d-flex align-items-center gap-2">
+              <span class="badge bg-dark-subtle text-dark border px-2 py-1">
+                <i class="fa-solid fa-users-gear me-1"></i> Project Team:
+              </span>
+              <span class="text-secondary small fw-medium">
+                <strong>Atharv Malviya</strong> (0827CS241044) &bull; <strong>Danish Ahmed</strong> (0827CS241062)
+              </span>
+            </div>
+          </div>
+          
+          <!-- Key Metrics Column -->
+          <div class="col-lg-5">
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="hero-stats-card">
+                  <div class="text-muted small fw-bold text-uppercase">Total Blood Units</div>
+                  <div class="stat-number" id="stat-total-units">--</div>
+                  <div class="small text-success"><i class="fa-solid fa-circle-check me-1"></i> In Cold Storage</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="hero-stats-card">
+                  <div class="text-muted small fw-bold text-uppercase">Registered Donors</div>
+                  <div class="stat-number" id="stat-total-donors">--</div>
+                  <div class="small text-muted"><i class="fa-solid fa-id-card me-1"></i> Verified Demographics</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="hero-stats-card">
+                  <div class="text-muted small fw-bold text-uppercase">Fulfilled Requisitions</div>
+                  <div class="stat-number" id="stat-fulfilled-reqs">--</div>
+                  <div class="small text-primary"><i class="fa-solid fa-shield-heart me-1"></i> Dispatched to Hospitals</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="hero-stats-card">
+                  <div class="text-muted small fw-bold text-uppercase">Pending Review</div>
+                  <div class="stat-number" id="stat-pending-reqs">--</div>
+                  <div class="small text-danger"><i class="fa-solid fa-clock-rotate-left me-1"></i> In Emergency Queue</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Modules Showcase -->
+    <div class="container py-5">
+      <div class="text-center mb-5">
+        <div class="section-badge">Synopsis Architecture</div>
+        <h2 class="fw-bold">Comprehensive Blood Banking Capabilities</h2>
+        <p class="text-muted">Bridging voluntary donors, hospital requests, and automated inventory sync.</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card card-custom h-100 p-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
+              <i class="fa-solid fa-hand-holding-droplet"></i>
+            </div>
+            <h5 class="fw-bold">90-Day Cooldown Engine</h5>
+            <p class="text-muted small">
+              Enforces physiological recovery tracking with automated eligibility calculation. Donors within the 90-day cooldown period cannot be double-scheduled, ensuring donor safety.
+            </p>
+            <a href="#" class="text-danger fw-semibold mt-auto small" data-view-target="view-donors">
+              Explore Donor Registry &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card card-custom h-100 p-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
+              <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+            <h5 class="fw-bold">Atomic Request Adjudication</h5>
+            <p class="text-muted small">
+              Administrators review inbound clinical requisitions. When approved, stock counts are decremented atomically with relational integrity to prevent orphaned transaction records.
+            </p>
+            <a href="#" class="text-danger fw-semibold mt-auto small" data-view-target="view-admin">
+              Open Admin Console &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card card-custom h-100 p-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h5 class="fw-bold">Relational Schema & MySQL</h5>
+            <p class="text-muted small">
+              Designed around 4 core relational tables: <span class="badge bg-secondary">DONORS</span>, <span class="badge bg-secondary">BLOOD_INVENTORY</span>, <span class="badge bg-secondary">BLOOD_REQUESTS</span>, and <span class="badge bg-secondary">ADMINISTRATORS</span>.
+            </p>
+            <a href="#" class="text-danger fw-semibold mt-auto small" data-view-target="view-schema">
+              View ER & SQL Schema &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Blood Compatibility Guide Banner -->
+      <div class="card card-custom p-4 mt-5">
+        <div class="row align-items-center">
+          <div class="col-lg-4">
+            <h4 class="fw-bold mb-1"><i class="fa-solid fa-code-compare text-danger me-2"></i>Compatibility Calculator</h4>
+            <p class="text-muted small mb-3">Select any recipient blood group to inspect compatible donor blood groups.</p>
+            <select id="compat-blood-group-select" class="form-select form-select-lg">
+              <option value="O+">O Positive (O+)</option>
+              <option value="O-">O Negative (O-) &mdash; Universal Donor</option>
+              <option value="A+">A Positive (A+)</option>
+              <option value="A-">A Negative (A-)</option>
+              <option value="B+">B Positive (B+)</option>
+              <option value="B-">B Negative (B-)</option>
+              <option value="AB+" selected>AB Positive (AB+) &mdash; Universal Recipient</option>
+              <option value="AB-">AB Negative (AB-)</option>
+            </select>
+          </div>
+          <div class="col-lg-8 mt-3 mt-lg-0 border-start ps-lg-4">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="p-3 bg-light rounded-3">
+                  <div class="text-muted small fw-bold text-uppercase mb-2">Can Safely Receive From:</div>
+                  <div id="compat-can-receive" class="d-flex flex-wrap gap-1"></div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 bg-light rounded-3">
+                  <div class="text-muted small fw-bold text-uppercase mb-2">Can Safely Donate To:</div>
+                  <div id="compat-can-donate" class="d-flex flex-wrap gap-1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 2: PUBLIC LIVE INVENTORY LOOKUP -->
+  <!-- ============================================================ -->
+  <section id="view-inventory" class="view-section d-none py-5">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+        <div>
+          <div class="section-badge">Module A: Public Lookup</div>
+          <h2 class="fw-bold mb-1">Real-Time Blood Unit Inventory</h2>
+          <p class="text-muted mb-0">Public inquiry panel displaying verified blood unit reserves without exposing confidential donor logs.</p>
+        </div>
+        <!-- Group filter buttons -->
+        <div class="btn-group mt-3 mt-md-0" role="group">
+          <button type="button" class="btn btn-outline-danger inv-filter-btn active" data-filter="ALL">All Types</button>
+          <button type="button" class="btn btn-outline-danger inv-filter-btn" data-filter="O+">O+</button>
+          <button type="button" class="btn btn-outline-danger inv-filter-btn" data-filter="O-">O-</button>
+          <button type="button" class="btn btn-outline-danger inv-filter-btn" data-filter="A+">A+</button>
+          <button type="button" class="btn btn-outline-danger inv-filter-btn" data-filter="B+">B+</button>
+          <button type="button" class="btn btn-outline-danger inv-filter-btn" data-filter="AB+">AB+</button>
+        </div>
+      </div>
+
+      <!-- Live Cards Grid (populated via JS) -->
+      <div class="row" id="public-inventory-grid"></div>
+
+      <!-- Inventory Legend and Tips -->
+      <div class="row g-4 mt-2">
+        <div class="col-md-6">
+          <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-circle-info text-primary me-2"></i>Inventory Threshold Guide</h5>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2 d-flex align-items-center">
+                <span class="status-pill abundant me-2">Optimal Supply</span>
+                <span class="small text-muted">&gt;= 10 units available. Ready for immediate routine & emergency release.</span>
+              </li>
+              <li class="mb-2 d-flex align-items-center">
+                <span class="status-pill low me-2">Moderate Stock</span>
+                <span class="small text-muted">5 to 9 units available. Monitored for pending operations.</span>
+              </li>
+              <li class="d-flex align-items-center">
+                <span class="status-pill critical me-2">Critical Shortage</span>
+                <span class="small text-muted">&lt; 5 units available. Urgent volunteer donor recall activated.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card card-custom p-4 bg-danger text-white">
+            <h5 class="fw-bold mb-2"><i class="fa-solid fa-truck-fast me-2"></i>Need Emergency Blood Now?</h5>
+            <p class="small text-white-50">
+              Hospitals, nursing homes, and emergency care attendants can submit a direct requisition with patient details. Priority triage ensures blood units are set aside immediately.
+            </p>
+            <button class="btn btn-light text-danger fw-bold btn-sm mt-2 align-self-start" data-view-target="view-request">
+              <i class="fa-solid fa-arrow-right me-1"></i> Submit Emergency Requisition
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 3: DONOR ONBOARDING & 90-DAY COOLDOWN REGISTRY -->
+  <!-- ============================================================ -->
+  <section id="view-donors" class="view-section d-none py-5">
+    <div class="container">
+      <div class="mb-4">
+        <div class="section-badge">Module A & B: Donor Registry Management</div>
+        <h2 class="fw-bold mb-1">Donor Onboarding & 90-Day Cooldown Registry</h2>
+        <p class="text-muted">Digital registration capturing validated demographics and physiological recovery eligibility.</p>
+      </div>
+
+      <div class="row g-4">
+        <!-- Registration Form Column -->
+        <div class="col-lg-5">
+          <div class="card card-custom p-4">
+            <div class="card-custom-header p-0 pb-3 mb-3 border-bottom">
+              <h5 class="fw-bold mb-1"><i class="fa-solid fa-user-plus text-danger me-2"></i>Register Voluntary Donor</h5>
+              <small class="text-muted">Enforces mandatory 18+ age limit & 90-day cooldown interval</small>
+            </div>
+
+            <form id="donor-registration-form">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Full Legal Name *</label>
+                <input type="text" id="donor_name" class="form-control" placeholder="e.g. Atharv Malviya" required>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Blood Group *</label>
+                  <select id="donor_blood_group" class="form-select" required>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+" selected>O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Age (18-65) *</label>
+                  <input type="number" id="donor_age" class="form-control" min="18" max="65" placeholder="e.g. 24" required>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Gender *</label>
+                  <select id="donor_gender" class="form-select" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">City *</label>
+                  <input type="text" id="donor_city" class="form-control" placeholder="e.g. Bhopal" required>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Contact Number *</label>
+                <input type="tel" id="donor_contact" class="form-control" placeholder="+91 9876543210" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Last Donation Date (Leave empty if first time)</label>
+                <input type="date" id="donor_last_date" class="form-control">
+              </div>
+
+              <!-- Real-time Cooldown Verification Alert -->
+              <div id="donor-cooldown-feedback" class="cooldown-box eligible">
+                <i class="fa-solid fa-info-circle fs-4"></i>
+                <div class="small">
+                  First time voluntary donors or donors past 90 days are immediately eligible to donate.
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-crimson w-100 mt-4 py-2">
+                <i class="fa-solid fa-check-circle me-1"></i> Complete Donor Registration
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Donor Roster Table Column -->
+        <div class="col-lg-7">
+          <div class="card card-custom h-100 p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold mb-0"><i class="fa-solid fa-users text-danger me-2"></i>Registered Donors Directory</h5>
+                <small class="text-muted">Query-driven verification &amp; 90-day cooldown status</small>
+              </div>
+              <div class="mt-2 mt-sm-0" style="width: 200px;">
+                <input type="text" id="donor-search-input" class="form-control form-control-sm" placeholder="Search donors...">
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Donor Name</th>
+                    <th>Group</th>
+                    <th>Contact</th>
+                    <th>Last Donated</th>
+                    <th>Eligibility</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="donor-roster-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="alert alert-light border small text-muted mt-3 mb-0">
+              <i class="fa-solid fa-lightbulb text-warning me-1"></i>
+              <strong>Tip:</strong> Clicking <em>"Log Donation"</em> automatically updates the donor's <code>last_donation_date</code> to today, adds +1 unit to the corresponding blood group inventory, and resets their 90-day cooldown counter.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 4: EMERGENCY BLOOD REQUEST PORTAL -->
+  <!-- ============================================================ -->
+  <section id="view-request" class="view-section d-none py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card card-custom p-4 p-md-5">
+            <div class="text-center mb-4">
+              <div class="section-badge">Module A: Emergency Request Portal</div>
+              <h2 class="fw-bold">Clinical Blood Requisition Submission</h2>
+              <p class="text-muted">
+                Official intake portal for hospitals, surgery teams, and patient representatives. Requisitions enter the priority adjudication pipeline.
+              </p>
+            </div>
+
+            <form id="emergency-request-form">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Patient Full Name *</label>
+                  <input type="text" id="req_patient_name" class="form-control" placeholder="e.g. Ramesh Chandra" required>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold">Blood Group *</label>
+                  <select id="req_blood_group" class="form-select" required>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold">Units Needed *</label>
+                  <input type="number" id="req_units" class="form-control" min="1" max="10" value="1" required>
+                </div>
+
+                <!-- Live Stock Feedback Banner -->
+                <div class="col-12">
+                  <div id="req-stock-indicator" class="alert alert-success py-2 mb-0">
+                    <i class="fa-solid fa-circle-check me-1"></i> In Stock! Checking inventory reserves...
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Hospital / Clinical Facility *</label>
+                  <input type="text" id="req_hospital" class="form-control" placeholder="e.g. AIIMS Bhopal" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Urgency Priority Level *</label>
+                  <select id="req_priority" class="form-select" required>
+                    <option value="Emergency">EMERGENCY (Immediate Trauma / Surgery)</option>
+                    <option value="High">HIGH (Scheduled Procedure within 24h)</option>
+                    <option value="Normal">NORMAL (Routine Transfusion Support)</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Doctor / Attendant Contact Person *</label>
+                  <input type="text" id="req_contact_person" class="form-control" placeholder="e.g. Dr. Alok Sen" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Emergency Phone Number *</label>
+                  <input type="tel" id="req_contact_no" class="form-control" placeholder="+91 9827011223" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Clinical Diagnosis / Requisition Reason</label>
+                  <textarea id="req_notes" class="form-control" rows="2" placeholder="e.g. Acute trauma in emergency ward, cross-matching required"></textarea>
+                </div>
+
+                <div class="col-12 mt-4">
+                  <button type="submit" class="btn btn-crimson w-100 py-3 fs-5">
+                    <i class="fa-solid fa-paper-plane me-2"></i> Submit Urgent Blood Requisition
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 5: REQUISITION STATUS TRACKER -->
+  <!-- ============================================================ -->
+  <section id="view-tracker" class="view-section d-none py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="text-center mb-4">
+            <div class="section-badge">Public Portal</div>
+            <h2 class="fw-bold">Track Requisition Status</h2>
+            <p class="text-muted">Enter your Requisition ID (e.g., 201 or 202) or Patient Name to verify approval & unit reservation status.</p>
+          </div>
+
+          <div class="card card-custom p-4">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-danger"></i></span>
+              <input type="text" id="track-query-input" class="form-control border-start-0" placeholder="Enter Requisition ID (e.g. 201) or Patient Name">
+              <button class="btn btn-crimson px-4" id="btn-track-request">Track Status</button>
+            </div>
+            <div class="small text-muted mt-2 ps-1">
+              Demo sample IDs to test: <code>201</code> (Pending), <code>202</code> (Approved), <code>203</code> (Fulfilled)
+            </div>
+          </div>
+
+          <!-- Result Container (populated dynamically) -->
+          <div id="track-result-container"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 6: ADMINISTRATIVE & INVENTORY CONSOLE -->
+  <!-- ============================================================ -->
+  <section id="view-admin" class="view-section d-none py-5">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+          <div class="section-badge">Module B: Administrative Console</div>
+          <h2 class="fw-bold mb-1">Administrative & Stock Management Console</h2>
+          <p class="text-muted mb-0">Adjudicate inbound requisitions, adjust unit reserves, and monitor synchronized inventory transactions.</p>
+        </div>
+        <div class="mt-3 mt-md-0 d-flex gap-2">
+          <button class="btn btn-sm btn-outline-danger" id="btn-reset-database">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset Demo Database
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub Tabs for Admin Area -->
+      <ul class="nav nav-pills mb-4 gap-2" id="adminTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#admin-tab-adjudicate">
+            <i class="fa-solid fa-gavel me-1"></i> Requisition Adjudication
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#admin-tab-stock">
+            <i class="fa-solid fa-boxes-packing me-1"></i> Stock Reserve Management
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- Sub-Tab 1: Requisition Adjudication -->
+        <div class="tab-pane fade show active" id="admin-tab-adjudicate">
+          <div class="card card-custom p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0">Inbound Blood Requisitions</h5>
+              <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+                <span class="small text-muted">Filter:</span>
+                <select id="admin-req-filter" class="form-select form-select-sm" style="width: 140px;">
+                  <option value="ALL">All Statuses</option>
+                  <option value="Pending" selected>Pending</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Fulfilled">Fulfilled</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table table">
+                <thead>
+                  <tr>
+                    <th>Req #</th>
+                    <th>Patient & Hospital</th>
+                    <th>Blood Group</th>
+                    <th>Live Stock Check</th>
+                    <th>Status</th>
+                    <th>Contact</th>
+                    <th class="text-end">Adjudication Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adjudication-tbody"></tbody>
+              </table>
+            </div>
+            
+            <div class="alert alert-secondary small mt-3 mb-0">
+              <i class="fa-solid fa-lock text-danger me-1"></i>
+              <strong>Relational Stock Integrity:</strong> Clicking <em>"Approve &amp; Deduct"</em> checks if <code>available_units &gt;= units_requested</code> and immediately executes a synchronized decrement in the <code>BLOOD_INVENTORY</code> table.
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-Tab 2: Stock Management Console -->
+        <div class="tab-pane fade" id="admin-tab-stock">
+          <div class="card card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold mb-1">Direct Stock Reserve Adjustment</h5>
+                <small class="text-muted">Modify unit reserves based on fresh donation batches, screening tests, and expirations.</small>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table table">
+                <thead>
+                  <tr>
+                    <th>Blood Group</th>
+                    <th>Adjust Units</th>
+                    <th>Reserve Level</th>
+                    <th>Last Synchronized</th>
+                    <th class="text-end">Save</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-stock-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 7: PROJECT SYNOPSIS, DATA DICTIONARY & ER DIAGRAM -->
+  <!-- ============================================================ -->
+  <section id="view-schema" class="view-section d-none py-5">
+    <div class="container">
+      <div class="mb-4">
+        <div class="section-badge">Academic Synopsis &amp; Architecture</div>
+        <h2 class="fw-bold mb-1">Project Synopsis &amp; Relational Schema Specification</h2>
+        <p class="text-muted">Direct mapping of the RedPulse synopsis document: Entities, Relational Tables, Data Dictionary, and Functional Dependencies.</p>
+      </div>
+
+      <!-- Synopsis Metadata Banner -->
+      <div class="card card-custom p-4 mb-4">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="text-muted small">Domain</div>
+            <div class="fw-bold">Database Management Systems (Relational Web App)</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Team Name &amp; Size</div>
+            <div class="fw-bold">RedPulse (2 Members)</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Team Member 1</div>
+            <div class="fw-bold">Atharv Malviya <span class="badge bg-secondary">0827CS241044</span></div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">Team Member 2</div>
+            <div class="fw-bold">Danish Ahmed <span class="badge bg-secondary">0827CS241062</span></div>
+          </div>
+          <div class="col-12 border-top pt-2 mt-2">
+            <div class="text-muted small">Technology Stack</div>
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              <span class="badge bg-danger">HTML5</span>
+              <span class="badge bg-danger">CSS3</span>
+              <span class="badge bg-danger">JavaScript</span>
+              <span class="badge bg-danger">Bootstrap 5</span>
+              <span class="badge bg-dark">Node.js (Express.js)</span>
+              <span class="badge bg-primary">MySQL (XAMPP)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Dictionary Tables Grid -->
+      <div class="row g-4 mb-4">
+        <!-- DONORS Table -->
+        <div class="col-md-6">
+          <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-danger border-bottom pb-2">
+              <i class="fa-solid fa-table me-2"></i>Table 1: DONORS
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light">
+                  <tr><th>Column</th><th>Data Type</th><th>Constraints</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>donor_id</code></td><td>INT</td><td><strong>Primary Key, Auto Increment</strong></td></tr>
+                  <tr><td><code>full_name</code></td><td>VARCHAR(100)</td><td>Not Null</td></tr>
+                  <tr><td><code>blood_group</code></td><td>VARCHAR(5)</td><td>Not Null</td></tr>
+                  <tr><td><code>age</code></td><td>INT</td><td>Not Null</td></tr>
+                  <tr><td><code>gender</code></td><td>VARCHAR(10)</td><td>Not Null</td></tr>
+                  <tr><td><code>contact_no</code></td><td>VARCHAR(15)</td><td>Not Null</td></tr>
+                  <tr><td><code>city</code></td><td>VARCHAR(50)</td><td>Not Null</td></tr>
+                  <tr><td><code>last_donation_date</code></td><td>DATE</td><td>Nullable</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOOD_INVENTORY Table -->
+        <div class="col-md-6">
+          <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-danger border-bottom pb-2">
+              <i class="fa-solid fa-table me-2"></i>Table 2: BLOOD_INVENTORY
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light">
+                  <tr><th>Column</th><th>Data Type</th><th>Constraints</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>inventory_id</code></td><td>INT</td><td><strong>Primary Key, Auto Increment</strong></td></tr>
+                  <tr><td><code>blood_group</code></td><td>VARCHAR(5)</td><td><strong>Unique, Not Null</strong></td></tr>
+                  <tr><td><code>available_units</code></td><td>INT</td><td>Default 0</td></tr>
+                  <tr><td><code>last_updated</code></td><td>TIMESTAMP</td><td>Default Current_Timestamp On Update</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOOD_REQUESTS Table -->
+        <div class="col-md-6">
+          <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-danger border-bottom pb-2">
+              <i class="fa-solid fa-table me-2"></i>Table 3: BLOOD_REQUESTS
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light">
+                  <tr><th>Column</th><th>Data Type</th><th>Constraints</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>request_id</code></td><td>INT</td><td><strong>Primary Key, Auto Increment</strong></td></tr>
+                  <tr><td><code>patient_name</code></td><td>VARCHAR(100)</td><td>Not Null</td></tr>
+                  <tr><td><code>blood_group_needed</code></td><td>VARCHAR(5)</td><td>Not Null</td></tr>
+                  <tr><td><code>units_requested</code></td><td>INT</td><td>Not Null</td></tr>
+                  <tr><td><code>hospital_name</code></td><td>VARCHAR(150)</td><td>Not Null</td></tr>
+                  <tr><td><code>contact_person</code></td><td>VARCHAR(100)</td><td>Not Null</td></tr>
+                  <tr><td><code>contact_no</code></td><td>VARCHAR(15)</td><td>Not Null</td></tr>
+                  <tr><td><code>request_date</code></td><td>DATETIME</td><td>Default Current_Timestamp</td></tr>
+                  <tr><td><code>status</code></td><td>ENUM</td><td>('Pending','Approved','Rejected','Fulfilled')</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMINISTRATORS Table -->
+        <div class="col-md-6">
+          <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-danger border-bottom pb-2">
+              <i class="fa-solid fa-table me-2"></i>Table 4: ADMINISTRATORS
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light">
+                  <tr><th>Column</th><th>Data Type</th><th>Constraints</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>admin_id</code></td><td>INT</td><td><strong>Primary Key, Auto Increment</strong></td></tr>
+                  <tr><td><code>username</code></td><td>VARCHAR(50)</td><td><strong>Unique, Not Null</strong></td></tr>
+                  <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>Not Null</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Functional Dependencies Display -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-diagram-project text-danger me-2"></i>Functional Dependencies (FD Diagram Representation)</h5>
+        <div class="bg-light p-3 rounded-3 font-monospace small">
+          <p class="mb-2"><strong>DONORS:</strong> <code>donor_id &rarr; full_name, blood_group, age, gender, contact_no, city, last_donation_date</code></p>
+          <p class="mb-2"><strong>BLOOD_INVENTORY:</strong> <code>inventory_id &rarr; blood_group, available_units, last_updated; blood_group &rarr; available_units</code></p>
+          <p class="mb-2"><strong>BLOOD_REQUESTS:</strong> <code>request_id &rarr; patient_name, blood_group_needed, units_requested, hospital_name, contact_person, contact_no, request_date, status</code></p>
+          <p class="mb-0"><strong>ADMINISTRATORS:</strong> <code>admin_id &rarr; username, password_hash</code></p>
+        </div>
+      </div>
+
+      <!-- SQL Script Viewer with Copy Button -->
+      <div class="card card-custom p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-file-code text-danger me-2"></i>MySQL (XAMPP) Schema Script</h5>
+            <small class="text-muted">Import directly via phpMyAdmin or MySQL CLI</small>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" onclick="navigator.clipboard.writeText(document.getElementById('sql-code-block').innerText); showToast('SQL copied to clipboard!', 'success');">
+            <i class="fa-solid fa-copy me-1"></i> Copy SQL Script
+          </button>
+        </div>
+
+        <pre class="code-preview" id="sql-code-block"><code>CREATE DATABASE IF NOT EXISTS redpulse_db;
+USE redpulse_db;
+
+-- 1. ADMINISTRATORS
+CREATE TABLE IF NOT EXISTS ADMINISTRATORS (
+    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
+) ENGINE=InnoDB;
+
+-- 2. BLOOD_INVENTORY
+CREATE TABLE IF NOT EXISTS BLOOD_INVENTORY (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT,
+    blood_group VARCHAR(5) UNIQUE NOT NULL,
+    available_units INT DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 3. DONORS
+CREATE TABLE IF NOT EXISTS DONORS (
+    donor_id INT PRIMARY KEY AUTO_INCREMENT,
+    full_name VARCHAR(100) NOT NULL,
+    blood_group VARCHAR(5) NOT NULL,
+    age INT NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    contact_no VARCHAR(15) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    last_donation_date DATE NULL
+) ENGINE=InnoDB;
+
+-- 4. BLOOD_REQUESTS
+CREATE TABLE IF NOT EXISTS BLOOD_REQUESTS (
+    request_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_name VARCHAR(100) NOT NULL,
+    blood_group_needed VARCHAR(5) NOT NULL,
+    units_requested INT NOT NULL,
+    hospital_name VARCHAR(150) NOT NULL,
+    contact_person VARCHAR(100) NOT NULL,
+    contact_no VARCHAR(15) NOT NULL,
+    request_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('Pending','Approved','Rejected','Fulfilled') DEFAULT 'Pending'
+) ENGINE=InnoDB;</code></pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ADMIN LOGIN MODAL -->
+  <!-- ============================================================ -->
+  <div class="modal fade" id="adminLoginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card-custom">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-danger">
+            <i class="fa-solid fa-user-shield me-2"></i>Administrator Authentication
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small">Access the stock reserve console and requisition adjudication pipeline.</p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Username</label>
+            <input type="text" id="admin_user" class="form-control" value="admin" placeholder="admin">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Password</label>
+            <input type="password" id="admin_pass" class="form-control" value="admin123" placeholder="••••••••">
+          </div>
+          <div class="alert alert-light border small text-muted">
+            <i class="fa-solid fa-circle-info text-primary me-1"></i> Preloaded demo credentials: <code>admin</code> / <code>admin123</code>
+          </div>
+          <button type="button" class="btn btn-crimson w-100 py-2 mt-2" id="btn-admin-login-submit">
+            <i class="fa-solid fa-right-to-bracket me-1"></i> Authenticate &amp; Open Portal
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-4 mt-5">
+    <div class="container text-center">
+      <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+        <span class="pulse-anim text-danger fs-5"><i class="fa-solid fa-droplet"></i></span>
+        <strong class="text-white fs-5">RedPulse Blood Bank Management System</strong>
+      </div>
+      <p class="small text-secondary mb-2">
+        Relational Web Application for Real-Time Blood Inventory, Donor Registry and Emergency Request Management
+      </p>
+      <div class="small text-secondary">
+        Project Synopsis Implementation &bull; Team: <strong>Atharv Malviya</strong> (0827CS241044) &amp; <strong>Danish Ahmed</strong> (0827CS241062)
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 Bundle JS (Includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Core Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

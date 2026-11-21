@@ -1,0 +1,26 @@
+{
+  "name": "redpulse-blood-bank-management-system",
+  "version": "1.0.0",
+  "description": "Relational Web Application for Real-Time Blood Inventory, Donor Registry and Emergency Request Management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "blood-bank",
+    "dbms",
+    "mysql",
+    "express",
+    "relational-database"
+  ],
+  "author": "Atharv Malviya (0827CS241044), Danish Ahmed (0827CS241062)",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.8"
+  }
+}
