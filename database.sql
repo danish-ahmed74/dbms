@@ -1,6 +1,6 @@
 -- ============================================================
 -- RedPulse: Blood Bank Management System
--- Supabase (PostgreSQL) Database Schema & Seed Data
+-- Supabase (PostgreSQL) Database Schema, Permissions & Seed Data
 -- ============================================================
 
 -- Drop existing tables if re-running
@@ -83,10 +83,20 @@ CREATE POLICY "Public access to donors" ON donors FOR ALL USING (true) WITH CHEC
 CREATE POLICY "Public access to blood_requests" ON blood_requests FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
+-- CRITICAL PERMISSIONS FOR SUPABASE API KEY (anon & authenticated)
+-- ============================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated;
+
+-- ============================================================
 -- SEED DATA
 -- ============================================================
 
--- Seed Administrators (password: admin123)
+-- Seed Administrators (Password: admin123)
 INSERT INTO administrators (username, password_hash) VALUES 
 ('admin', '$2b$10$wT8m9V4r2GqPqfO.u1i4yeYnCsmv4jP6XF4rA6CgE6.1w6K8fO8eG'),
 ('danish', '$2b$10$wT8m9V4r2GqPqfO.u1i4yeYnCsmv4jP6XF4rA6CgE6.1w6K8fO8eG'),
@@ -95,17 +105,10 @@ ON CONFLICT (username) DO NOTHING;
 
 -- Seed Initial Blood Inventory (All 8 blood groups)
 INSERT INTO blood_inventory (blood_group, available_units) VALUES
-('A+', 24),
-('A-', 8),
-('B+', 32),
-('B-', 6),
-('AB+', 14),
-('AB-', 4),
-('O+', 45),
-('O-', 9)
+('A+', 24), ('A-', 8), ('B+', 32), ('B-', 6), ('AB+', 14), ('AB-', 4), ('O+', 45), ('O-', 9)
 ON CONFLICT (blood_group) DO UPDATE SET available_units = EXCLUDED.available_units;
 
--- Seed Donors
+-- Seed Donors (for 90-day cooldown testing)
 INSERT INTO donors (full_name, blood_group, age, gender, contact_no, city, last_donation_date) VALUES
 ('Rahul Sharma', 'O+', 28, 'Male', '+91 9876543210', 'Bhopal', '2026-08-10'),
 ('Priya Verma', 'A+', 24, 'Female', '+91 9823456781', 'Indore', '2026-11-05'),
